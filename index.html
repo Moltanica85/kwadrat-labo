@@ -1,49 +1,188 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
 <head>
-  <meta charset="UTF-8" />
-  <title>AI Sprite Generator</title>
+    <meta charset="UTF-8">
+    <title>AI Pixel Animator — Generator Sprite’ów</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #eee;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background: #111;
+            padding: 20px;
+            text-align: center;
+            font-size: 26px;
+            font-weight: bold;
+            border-bottom: 2px solid #333;
+        }
+        .container {
+            display: flex;
+            padding: 20px;
+            gap: 20px;
+        }
+        .panel {
+            background: #222;
+            padding: 20px;
+            border-radius: 10px;
+            flex: 1;
+        }
+        h2 {
+            margin-top: 0;
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        input, select, button, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            background: #333;
+            color: #eee;
+            border: 1px solid #555;
+            border-radius: 5px;
+        }
+        button {
+            background: #4caf50;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        #preview-img, #preview-gif {
+            width: 100%;
+            margin-top: 10px;
+            border: 1px solid #444;
+            background: #000;
+        }
+        .row {
+            display: flex;
+            gap: 10px;
+        }
+        .row > div {
+            flex: 1;
+        }
+    </style>
 </head>
+
 <body>
-  <h1>AI Sprite Generator (walk/run/jump)</h1>
-  <form id="gen-form">
-    <label>Reference image:
-      <input type="file" name="file" accept="image/*" required />
-    </label>
-    <br />
-    <label>Prompt:
-      <input type="text" name="prompt" value="pixel art warrior" />
-    </label>
-    <br />
-    <label>Animations (comma separated):
-      <input type="text" name="animations" value="idle,walk,run,jump" />
-    </label>
-    <br />
-    <label>Frame size:
-      <input type="number" name="frame_size" value="128" />
-    </label>
-    <br />
-    <button type="submit">Generate</button>
-  </form>
 
-  <pre id="result"></pre>
+<header>AI Pixel Animator — Twój Generator Animacji 2D</header>
 
-  <script>
-    const form = document.getElementById('gen-form');
-    const result = document.getElementById('result');
+<div class="container">
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const formData = new FormData(form);
+    <!-- PANEL LEWY — OPCJE GENEROWANIA -->
+    <div class="panel">
+        <h2>Ustawienia</h2>
 
-      const res = await fetch('http://localhost:8000/generate', {
-        method: 'POST',
-        body: formData
-      });
+        <label>Obraz referencyjny:</label>
+        <input type="file" id="refImage" accept="image/*">
 
-      const json = await res.json();
-      result.textContent = JSON.stringify(json, null, 2);
+        <label>Prompt (opis postaci):</label>
+        <input type="text" id="prompt" value="pixel art warrior">
+
+        <label>Wybór modelu AI:</label>
+        <select id="model">
+            <option value="sd15">Stable Diffusion 1.5</option>
+            <option value="sdxl">Stable Diffusion XL</option>
+            <option value="controlnet">ControlNet OpenPose</option>
+            <option value="animatediff">AnimateDiff</option>
+        </select>
+
+        <label>Animacje do wygenerowania:</label>
+        <select id="animations" multiple size="6">
+            <option value="idle">Idle</option>
+            <option value="walk">Walk</option>
+            <option value="run">Run</option>
+            <option value="jump">Jump</option>
+            <option value="attack">Attack</option>
+            <option value="hurt">Hurt</option>
+        </select>
+
+        <label>Liczba klatek na animację:</label>
+        <input type="number" id="frames" value="8">
+
+        <label>Rozmiar klatki (px):</label>
+        <input type="number" id="frameSize" value="128">
+
+        <label>Format eksportu:</label>
+        <select id="exportFormat">
+            <option value="png">PNG Sprite Sheet</option>
+            <option value="gif">GIF Animacji</option>
+            <option value="json">JSON (Aseprite)</option>
+            <option value="all">Wszystko</option>
+        </select>
+
+        <button id="generateBtn">Generuj Sprite</button>
+
+        <h2>Logi</h2>
+        <textarea id="log" rows="10" readonly></textarea>
+    </div>
+
+    <!-- PANEL PRAWY — PODGLĄD -->
+    <div class="panel">
+        <h2>Podgląd Sprite Sheet</h2>
+        <img id="preview-img" src="" alt="Sprite Sheet">
+
+        <h2>Podgląd GIF</h2>
+        <img id="preview-gif" src="" alt="GIF Animacji">
+    </div>
+
+</div>
+
+<script>
+    const log = (msg) => {
+        const logBox = document.getElementById("log");
+        logBox.value += msg + "\n";
+        logBox.scrollTop = logBox.scrollHeight;
+    };
+
+    document.getElementById("generateBtn").addEventListener("click", async () => {
+        log("⏳ Rozpoczynam generowanie...");
+
+        const fileInput = document.getElementById("refImage");
+        if (!fileInput.files.length) {
+            log("❌ Brak obrazu referencyjnego!");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+        formData.append("prompt", document.getElementById("prompt").value);
+        formData.append("animations", [...document.getElementById("animations").selectedOptions].map(o => o.value).join(","));
+        formData.append("frame_size", document.getElementById("frameSize").value);
+
+        log("➡️ Wysyłam dane do backendu...");
+
+        const res = await fetch("http://localhost:8000/generate", {
+            method: "POST",
+            body: formData
+        });
+
+        const json = await res.json();
+        log("✅ Otrzymano odpowiedź z backendu.");
+
+        if (json.sprite_sheet) {
+            document.getElementById("preview-img").src = json.sprite_sheet + "?t=" + Date.now();
+            log("🖼️ Załadowano sprite sheet.");
+        }
+
+        if (json.preview_gif) {
+            document.getElementById("preview-gif").src = json.preview_gif + "?t=" + Date.now();
+            log("🎞️ Załadowano GIF.");
+        }
+
+        log("🎉 Generowanie zakończone.");
     });
-  </script>
+</script>
+
 </body>
 </html>
