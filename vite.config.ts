@@ -10,6 +10,7 @@ const __dirname = path.dirname(__filename);
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/4kwadrat-labo/', // <--- TUTAJ DODAJESZ TĘ LINIJKĘ
   plugins: [react(), tailwindcss(), viteSingleFile()],
   resolve: {
     alias: {
