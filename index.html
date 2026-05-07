@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI Sprite Generator</title>
+</head>
+<body>
+  <h1>AI Sprite Generator (walk/run/jump)</h1>
+  <form id="gen-form">
+    <label>Reference image:
+      <input type="file" name="file" accept="image/*" required />
+    </label>
+    <br />
+    <label>Prompt:
+      <input type="text" name="prompt" value="pixel art warrior" />
+    </label>
+    <br />
+    <label>Animations (comma separated):
+      <input type="text" name="animations" value="idle,walk,run,jump" />
+    </label>
+    <br />
+    <label>Frame size:
+      <input type="number" name="frame_size" value="128" />
+    </label>
+    <br />
+    <button type="submit">Generate</button>
+  </form>
+
+  <pre id="result"></pre>
+
+  <script>
+    const form = document.getElementById('gen-form');
+    const result = document.getElementById('result');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+
+      const res = await fetch('http://localhost:8000/generate', {
+        method: 'POST',
+        body: formData
+      });
+
+      const json = await res.json();
+      result.textContent = JSON.stringify(json, null, 2);
+    });
+  </script>
+</body>
+</html>
