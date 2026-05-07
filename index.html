@@ -1,327 +1,63 @@
-
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Pixel Animator</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            min-height: 100vh;
-            margin: 0;
-            background-color: #282c34;
-            color: #e0e0e0;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        .container {
-            background-color: #3c3f46;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
-            max-width: 900px;
-            width: 100%;
-            box-sizing: border-box;
-            margin-bottom: 20px;
-        }
-        h1 {
-            color: #61dafb;
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.5em;
-            letter-spacing: 1px;
-        }
-        .input-group {
-            margin-bottom: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        .input-group label {
-            margin-bottom: 8px;
-            color: #bbbbbb;
-            font-size: 1.1em;
-        }
-        .input-group input[type="file"], 
-        .input-group input[type="text"],
-        .input-group select {
-            width: 100%;
-            padding: 12px;
-            border-radius: 6px;
-            border: 1px solid #555;
-            background-color: #4a4d54;
-            color: #e0e0e0;
-            font-size: 1em;
-            box-sizing: border-box;
-            margin-top: 5px;
-        }
-        .input-group input[type="file"] {
-            padding: 10px;
-            cursor: pointer;
-        }
-        .input-group input[type="file"]::file-selector-button {
-            background-color: #61dafb;
-            color: #282c34;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-right: 15px;
-            transition: background-color 0.3s ease;
-        }
-        .input-group input[type="file"]::file-selector-button:hover {
-            background-color: #45b7d9;
-        }
-        .input-group input[type="text"]::placeholder {
-            color: #888;
-        }
-        .button-group {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 30px;
-        }
-        .button-group button {
-            padding: 15px 30px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1.1em;
-            font-weight: bold;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-        }
-        .button-group button.generate {
-            background-color: #61dafb;
-            color: #282c34;
-        }
-        .button-group button.generate:hover {
-            background-color: #45b7d9;
-            transform: translateY(-2px);
-        }
-        .button-group button.reset {
-            background-color: #e06c75;
-            color: #282c34;
-        }
-        .button-group button.reset:hover {
-            background-color: #c45760;
-            transform: translateY(-2px);
-        }
-        .output-section {
-            margin-top: 40px;
-            background-color: #3c3f46;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
-            max-width: 900px;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        .output-section h2 {
-            color: #61dafb;
-            text-align: center;
-            margin-bottom: 25px;
-            font-size: 2em;
-        }
-        .output-images {
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-        .output-images div {
-            text-align: center;
-            background-color: #282c34;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-        }
-        .output-images img,
-        .output-images .placeholder {
-            max-width: 100%;
-            height: 200px;
-            width: 200px;
-            border: 1px solid #555;
-            border-radius: 4px;
-            display: block;
-            margin: 0 auto 10px auto;
-            object-fit: contain;
-            background-color: #1e2127;
-        }
-        .output-images .placeholder {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #888;
-            font-style: italic;
-        }
-        .output-images p {
-            color: #bbbbbb;
-            font-size: 0.9em;
-        }
-        .loading-spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid #61dafb;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-            display: none; /* Ukryte domyślnie */
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .error-message {
-            color: #e06c75;
-            text-align: center;
-            margin-top: 20px;
-            font-weight: bold;
-            display: none;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>AI Pixel Animator</h1>
-        <div class="input-group">
-            <label for="imageUpload">Wgraj obraz referencyjny:</label>
-            <input type="file" id="imageUpload" accept="image/*">
-        </div>
-        <div class="input-group">
-            <label for="promptInput">Prompt (opis postaci):</label>
-            <input type="text" id="promptInput" value="pixel art warrior, fantasy, knight, sword, shield">
-        </div>
-        <div class="input-group">
-            <label for="animationsSelect">Wybierz animacje (ControlNet):</label>
-            <select id="animationsSelect">
-                <option value="idle,walk" selected>Idle, Walk</option>
-                <option value="run">Run</option>
-                <option value="attack">Attack</option>
-                <option value="jump">Jump</option>
-                <option value="custom">Niestandardowe...</option>
-            </select>
-        </div>
-        <div class="input-group">
-            <label for="frameSizeInput">Rozmiar klatki (px):</label>
-            <input type="number" id="frameSizeInput" value="128" min="32" max="256">
-        </div>
-        <div class="button-group">
-            <button class="generate" onclick="generateSprite()">Generuj Sprite</button>
-            <button class="reset" onclick="resetForm()">Resetuj</button>
-        </div>
-        <div class="loading-spinner" id="loadingSpinner"></div>
-        <div class="error-message" id="errorMessage"></div>
-    </div>
-
-    <div class="output-section" id="outputSection" style="display:none;">
-        <h2>Wygenerowane Sprity</h2>
-        <div class="output-images">
-            <div>
-                <img id="spriteSheetOutput" src="" alt="Sprite Sheet" style="display:none;">
-                <div id="spriteSheetPlaceholder" class="placeholder">Sprite Sheet</div>
-                <p>Sprite Sheet (PNG)</p>
-            </div>
-            <div>
-                <img id="previewGifOutput" src="" alt="Preview GIF" style="display:none;">
-                <div id="previewGifPlaceholder" class="placeholder">Animowany Podgląd</div>
-                <p>Animowany Podgląd (GIF)</p>
-            </div>
-        </div>
-    </div>
-
     <script>
-        const API_URL = "http://localhost:8000"; // Adres API FastAPI
+        const API_URL = "http://localhost:8000"; // Upewnij się, że Twój serwer FastAPI działa pod tym adresem
 
         async function generateSprite() {
-            const imageUpload = document.getElementById('imageUpload');
-            const promptInput = document.getElementById('promptInput');
-            const animationsSelect = document.getElementById('animationsSelect');
-            const frameSizeInput = document.getElementById('frameSizeInput');
-            const loadingSpinner = document.getElementById('loadingSpinner');
-            const errorMessage = document.getElementById('errorMessage');
+            const imageFile = document.getElementById('imageUpload').files[0];
+            const prompt = document.getElementById('promptInput').value;
+            const animations = document.getElementById('animationsSelect').value;
+            const frameSize = document.getElementById('frameSizeInput').value;
+
+            // Elementy UI
+            const spinner = document.getElementById('loadingSpinner');
+            const error = document.getElementById('errorMessage');
             const outputSection = document.getElementById('outputSection');
-            const spriteSheetOutput = document.getElementById('spriteSheetOutput');
-            const previewGifOutput = document.getElementById('previewGifOutput');
-            const spriteSheetPlaceholder = document.getElementById('spriteSheetPlaceholder');
-            const previewGifPlaceholder = document.getElementById('previewGifPlaceholder');
 
-            errorMessage.style.display = 'none';
+            // Reset stanu
+            error.style.display = 'none';
+            spinner.style.display = 'block';
             outputSection.style.display = 'none';
-            spriteSheetOutput.style.display = 'none';
-            previewGifOutput.style.display = 'none';
-            spriteSheetPlaceholder.style.display = 'flex';
-            previewGifPlaceholder.style.display = 'flex';
 
-            if (imageUpload.files.length === 0) {
-                errorMessage.textContent = "Proszę wgrać obraz referencyjny.";
-                errorMessage.style.display = 'block';
-                return;
+            // Przygotowanie danych do wysyłki
+            const formData = new FormData();
+            formData.append('prompt', prompt);
+            formData.append('animations', animations);
+            formData.append('frame_size', frameSize);
+            if (imageFile) {
+                formData.append('image', imageFile);
             }
 
-            loadingSpinner.style.display = 'block';
-
-            const formData = new FormData();
-            formData.append('file', imageUpload.files[0]);
-            formData.append('prompt', promptInput.value);
-            formData.append('animations', animationsSelect.value);
-            formData.append('frame_size', frameSizeInput.value);
-
             try {
-                const response = await fetch(`${API_URL}/generate`, {
+                const response = await fetch(`${API_URL}/generate-sprite`, {
                     method: 'POST',
-                    body: formData,
+                    body: formData
                 });
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.detail || `Błąd serwera: ${response.status}`);
-                }
+                if (!response.ok) throw new Error('Błąd serwera: ' + response.statusText);
 
                 const data = await response.json();
-                console.log("Otrzymane dane:", data);
 
-                spriteSheetOutput.src = `${API_URL}${data.sprite_sheet}`;
-                previewGifOutput.src = `${API_URL}${data.preview_gif}`;
+                // Wyświetlanie wyników (zakładając, że API zwraca URL do plików)
+                document.getElementById('spriteSheetOutput').src = data.sprite_sheet_url;
+                document.getElementById('spriteSheetOutput').style.display = 'block';
+                document.getElementById('spriteSheetPlaceholder').style.display = 'none';
 
-                spriteSheetOutput.onload = () => {
-                    spriteSheetOutput.style.display = 'block';
-                    spriteSheetPlaceholder.style.display = 'none';
-                };
-                previewGifOutput.onload = () => {
-                    previewGifOutput.style.display = 'block';
-                    previewGifPlaceholder.style.display = 'none';
-                };
+                document.getElementById('previewGifOutput').src = data.gif_url;
+                document.getElementById('previewGifOutput').style.display = 'block';
+                document.getElementById('previewGifPlaceholder').style.display = 'none';
 
                 outputSection.style.display = 'block';
-
-            } catch (error) {
-                console.error("Błąd generowania sprite'a:", error);
-                errorMessage.textContent = `Wystąpił błąd: ${error.message}. Sprawdź konsolę (F12) dla szczegółów.`;
-                errorMessage.style.display = 'block';
+            } catch (err) {
+                error.innerText = "Wystąpił błąd: " + err.message;
+                error.style.display = 'block';
             } finally {
-                loadingSpinner.style.display = 'none';
+                spinner.style.display = 'none';
             }
         }
 
         function resetForm() {
             document.getElementById('imageUpload').value = '';
             document.getElementById('promptInput').value = 'pixel art warrior, fantasy, knight, sword, shield';
-            document.getElementById('animationsSelect').value = 'idle,walk';
-            document.getElementById('frameSizeInput').value = '128';
-            document.getElementById('loadingSpinner').style.display = 'none';
-            document.getElementById('errorMessage').style.display = 'none';
             document.getElementById('outputSection').style.display = 'none';
-            document.getElementById('spriteSheetOutput').style.display = 'none';
-            document.getElementById('previewGifOutput').style.display = 'none';
-            document.getElementById('spriteSheetPlaceholder').style.display = 'flex';
-            document.getElementById('previewGifPlaceholder').style.display = 'flex';
+            document.getElementById('errorMessage').style.display = 'none';
         }
     </script>
-</body>
-</html>
