@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+pillow
+numpy
+httpx
+loguru
+pydantic
+pydantic-settings
+websockets
+rembg
+controlnet-aux
+torch
+tensorflow
